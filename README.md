@@ -17,12 +17,12 @@ from brownie import convert
 When encoding data for using it with web3.solidityKeccak function, it is important to
 correctly encode the values sent to the function using the convert module.
 
-Here,we call the encoding function in python, with the following values:
+Here, we call the encoding function in python, with the following values:
 \_values=1
 \_fakes=True
 \_secrets="secret1".encode("utf-8")
 
-In python, we call the solidityKeccak function as follows:
+In python (brownie deployment script), we call the solidityKeccak function as follows:
 
 ```python
 sk = web3.solidityKeccak(["uint256", "bool", "bytes32"],

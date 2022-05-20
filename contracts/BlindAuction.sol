@@ -1,7 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity 0.8.13;
-
-import "./console.sol";
+pragma solidity 0.8.14;
 
 contract BlindAuction {
     struct Bid {
@@ -82,8 +80,6 @@ contract BlindAuction {
         bytes32[] calldata secrets
     ) external onlyAfter(biddingEnd) onlyBefore(revealEnd) {
         uint256 length = bids[msg.sender].length;
-        console.log("in reveal(), length=%d", length);
-        console.log("in reveal(), values.length=%d", values.length);
         require(values.length == length);
         require(fakes.length == length);
         require(secrets.length == length);
@@ -96,13 +92,6 @@ contract BlindAuction {
                 fakes[i],
                 secrets[i]
             );
-            console.log("value=%d, fake=, secret=", value);
-            console.logBool(fake);
-            console.logBytes32(secret);
-            console.logBytes32(bidToCheck.blindedBid);
-            console.logBytes32(
-                keccak256(abi.encodePacked(value, fake, secret))
-            );
             if (
                 bidToCheck.blindedBid !=
                 keccak256(abi.encodePacked(value, fake, secret))
@@ -112,12 +101,6 @@ contract BlindAuction {
                 continue;
             }
             refund += bidToCheck.deposit;
-            console.log(
-                "refund=%d,bidToCheck.deposit=%d",
-                refund,
-                bidToCheck.deposit
-            );
-            console.logBool(fake);
             if (!fake && bidToCheck.deposit >= value) {
                 if (placeBid(msg.sender, value)) refund -= value;
             }
@@ -131,7 +114,6 @@ contract BlindAuction {
     /// Withdraw a bid that was overbid.
     function withdraw() external {
         uint256 amount = pendingReturns[msg.sender];
-        console.log("in withdraw(), amount=%d", amount);
         if (amount > 0) {
             // It is important to set this to zero because the recipient
             // can call this function again as part of the receiving call
@@ -159,7 +141,6 @@ contract BlindAuction {
         internal
         returns (bool success)
     {
-        console.log("placeBid() called");
         if (value <= highestBid) {
             return false;
         }
