@@ -6,7 +6,7 @@ import Stack from "@mui/material/Stack";
 import { Paper } from "@mui/material";
 
 import { BigNumber, utils } from "ethers";
-import { addressNotZero, formatBalance } from "../utils/utils";
+import { addressNotZero, formatBalance, shortenAddress } from "../utils/utils";
 
 import { useBalance, useContractWrite } from "wagmi";
 import { useIsMounted, useDetailsSimpleAuction } from "../hooks";
@@ -135,6 +135,8 @@ const GetSimpleAuction = ({
     // eslint-disable-next-line
   }, [statusBalance, statusBid, statusWithdraw, statusAuctionEnd]);
 
+  const currentDate = new Date();
+  const auctionEndTimeFormatted = new Date(auctionEndTime).toLocaleString();
   return (
     <Stack
       direction="column"
@@ -145,18 +147,30 @@ const GetSimpleAuction = ({
     >
       {isMounted && (
         <>
+          <Typography variant="h5">Simple Auction</Typography>
           <Paper elevation={4}>
-            <Typography>Contract Address: {contractAddress}</Typography>
+            <Typography>
+              Contract Address: {shortenAddress(contractAddress)}
+            </Typography>
             {isSuccessBalance && (
               <Typography>Balance: {balance?.formatted} ETH </Typography>
             )}
-            <Typography>Beneficiary: {beneficiary}</Typography>
-            <Typography>Highest Bider: {highestBider}</Typography>
+            <Typography>Beneficiary: {shortenAddress(beneficiary)}</Typography>
+          </Paper>
+          <Paper elevation={4}>
+            <Typography>
+              Highest Bider: {shortenAddress(highestBider)}
+            </Typography>
             <Typography>
               Highest Bid: {formatBalance(highestBid)} ETH
             </Typography>
-            <Typography color={auctionEndTime < new Date() ? "red" : "blue"}>
-              Auction End Time: {new Date(auctionEndTime).toLocaleString()}
+            <Typography color={auctionEndTime < currentDate ? "red" : "green"}>
+              Auction{" "}
+              {auctionEndTime < currentDate ? (
+                <>ended at {auctionEndTimeFormatted}</>
+              ) : (
+                <>End Time: {auctionEndTimeFormatted}</>
+              )}
             </Typography>
           </Paper>
           <Stack
@@ -171,9 +185,10 @@ const GetSimpleAuction = ({
               variant="standard"
               type="text"
               margin="normal"
-              label="Value (in ether)"
+              label="Value (ETH)"
               value={value}
               required
+              size="small"
               onChange={handleValue}
               disabled={disabled}
             />
@@ -213,6 +228,14 @@ const GetSimpleAuction = ({
             >
               Withdraw?
             </Button>
+          </Stack>
+          <Stack
+            direction="row"
+            justifyContent="flex-start"
+            alignItems="flex-start"
+            padding={1}
+            spacing={1}
+          >
             <Button
               variant="contained"
               size="small"

@@ -1,4 +1,4 @@
 import Error from "./Error";
-import Auction from "./Auction";
+import SimpleAuction from "./SimpleAuction";
 
-export { Error, Auction };
+export { Error, SimpleAuction };

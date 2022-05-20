@@ -11,7 +11,7 @@ import {
 } from "../components";
 import { useIsMounted } from "../hooks";
 
-const Auction = () => {
+const SimpleAuction = () => {
   const isMounted = useIsMounted();
   const { activeChain } = useNetwork();
 
@@ -54,4 +54,4 @@ const Auction = () => {
   );
 };
 
-export default Auction;
+export default SimpleAuction;

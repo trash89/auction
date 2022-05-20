@@ -8,8 +8,8 @@ def main():
     bidding_time = 5*60
 
     simpleAuction = deploy_simpleAuction(bidding_time)
-    call_simpleAuction(simpleAuction)
-    end_simpleAuction(bidding_time, simpleAuction)
+    # call_simpleAuction(simpleAuction)
+    #end_simpleAuction(bidding_time, simpleAuction)
 
 
 def deploy_simpleAuction(bidding_time):
