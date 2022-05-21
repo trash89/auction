@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom";
 import "normalize.css";
 import "@rainbow-me/rainbowkit/styles.css";
+import "./index.css";
 import App from "./App";
 
 import { ApolloClient, ApolloProvider, InMemoryCache } from "@apollo/client";

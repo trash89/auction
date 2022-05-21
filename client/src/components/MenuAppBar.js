@@ -5,6 +5,8 @@ import Typography from "@mui/material/Typography";
 import IconButton from "@mui/material/IconButton";
 import MenuIcon from "@mui/icons-material/Menu";
 
+import { NavLink } from "react-router-dom";
+
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 const MenuAppBar = () => {
@@ -12,7 +14,10 @@ const MenuAppBar = () => {
     <Box sx={{ flexGrow: 1 }}>
       <AppBar position="static">
         <Toolbar variant="dense">
-          <a href="/">
+          <NavLink
+            to="/"
+            className={({ isActive }) => (isActive ? "link active" : "link")}
+          >
             <IconButton
               size="large"
               edge="start"
@@ -21,10 +26,26 @@ const MenuAppBar = () => {
             >
               <MenuIcon />
             </IconButton>
-          </a>
+          </NavLink>
+
           <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
             Auction
           </Typography>
+          <NavLink
+            style={{ flexGrow: 1 }}
+            to="/simpleauction"
+            className={({ isActive }) => (isActive ? "link active" : "link")}
+          >
+            Simple Auction
+          </NavLink>
+          <NavLink
+            style={{ flexGrow: 1 }}
+            to="/blindauction"
+            className={({ isActive }) => (isActive ? "link active" : "link")}
+          >
+            Blind Auction
+          </NavLink>
+
           <ConnectButton />
         </Toolbar>
       </AppBar>

@@ -1,18 +1,45 @@
-from brownie import convert, web3, accounts, BlindAuction
+from brownie import convert, web3, config, network, accounts, BlindAuction
+from scripts.helpful_scripts import get_account, update_front_end, LOCAL_BLOCKCHAIN_ENVIRONMENTS
+
 import time
 from eth_account.messages import encode_defunct
 
+# 5 minutes
+bidding_time = 5*60
+reveal_time = 5*60
+
 
 def main():
-    alice = accounts[0]
-    bob = accounts[1]
+    blindAuction = deploy_blindAuction(bidding_time, reveal_time)
+    call_blindAuction(blindAuction)
+    end_blindAuction(bidding_time, blindAuction)
+
+
+def deploy_blindAuction(bidding_time, reveal_time):
+    alice = get_account()
+    if network.show_active() in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
+        bob = get_account(index=1)
+    else:
+        bob = get_account(id="m2")
+    print("Alice deploy BlindAuction contract...")
+    blindAuction = BlindAuction.deploy(
+        bidding_time, reveal_time, alice.address, {"from": alice})
+    if (config["networks"][network.show_active(
+    )]["update_frontend"] == True):
+        update_front_end()
+    print(f"Deployed BlindAuction contract at {blindAuction}")
+    return blindAuction
+
+
+def call_blindAuction(blindAuction):
+    alice = get_account()
+    if network.show_active() in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
+        bob = get_account(index=1)
+    else:
+        bob = get_account(id="m2")
     # 1 minute
     bidding_time = 0.2*60
     reveal_time = 0.2*60
-    print("Alice deploy BlindAuction contract...")
-    ba = BlindAuction.deploy(
-        bidding_time, reveal_time, alice.address, {"from": accounts[0]})
-    print(f"Deployed BlindAuction contract at {ba}")
 
     print_values(alice, bob)
     # Alice's bids
@@ -20,11 +47,11 @@ def main():
     alice_fakes = [True, False, True]
     alice_secrets = ["secret1".encode(
         "utf-8"), "secret2".encode("utf-8"), "secret3".encode("utf-8")]
-    user_bid(ba, alice, "1 ether",
+    user_bid(blindAuction, alice, "1 gwei",
              alice_values[0], alice_fakes[0], alice_secrets[0])
-    user_bid(ba, alice, "2 ether",
+    user_bid(blindAuction, alice, "2 gwei",
              alice_values[1], alice_fakes[1], alice_secrets[1])
-    user_bid(ba, alice, "3 ether",
+    user_bid(blindAuction, alice, "3 gwei",
              alice_values[2], alice_fakes[2], alice_secrets[2])
     print_values(alice, bob)
 
@@ -32,17 +59,19 @@ def main():
     bob_values = [4, 5]
     bob_fakes = [False, True]
     bob_secrets = ["bob4".encode("utf-8"), "bob5".encode("utf-8")]
-    user_bid(ba, bob, "3 ether", bob_values[0], bob_fakes[0], bob_secrets[0])
-    user_bid(ba, bob, "4 ether", bob_values[1], bob_fakes[1], bob_secrets[1])
+    user_bid(blindAuction, bob, "3 gwei",
+             bob_values[0], bob_fakes[0], bob_secrets[0])
+    user_bid(blindAuction, bob, "4 gwei",
+             bob_values[1], bob_fakes[1], bob_secrets[1])
     print_values(alice, bob)
 
     print(
         f"Waiting {bidding_time} seconds in order to enter to reveal time...")
     time.sleep(bidding_time)
     # Alice reveals his bids
-    user_reveal(ba, alice, alice_values, alice_fakes, alice_secrets)
+    user_reveal(blindAuction, alice, alice_values, alice_fakes, alice_secrets)
     # Bob reveals his bids
-    user_reveal(ba, bob, bob_values, bob_fakes, bob_secrets)
+    user_reveal(blindAuction, bob, bob_values, bob_fakes, bob_secrets)
 
     print(
         f"Waiting {reveal_time} seconds in order to end the auction...")
@@ -50,27 +79,35 @@ def main():
 
     # Alice and Bob call withdraw()
     print("Alice calls withdraw()...")
-    tx = ba.withdraw({"from": alice})
+    tx = blindAuction.withdraw({"from": alice})
     tx.wait(1)
     print_values(alice, bob)
     print("Bob calls withdraw()...")
-    tx = ba.withdraw({"from": bob})
+    tx = blindAuction.withdraw({"from": bob})
     tx.wait(1)
     print_values(alice, bob)
 
+
+def end_blindAuction(bidding_time, blindAuction):
+    alice = get_account()
+    if network.show_active() in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
+        bob = get_account(index=1)
+    else:
+        bob = get_account(id="m2")
+
     # Alice calls auctionEnd()
     print("Alice calls auctionEnd()...")
-    tx = ba.auctionEnd({"from": alice})
+    tx = blindAuction.auctionEnd({"from": alice})
     tx.wait(1)
     print("Auction ended")
     print_values(alice, bob)
 
 
 def print_values(_alice, _bob):
-    a_bal = web3.fromWei(_alice.balance(), "ether")
-    b_bal = web3.fromWei(_bob.balance(), "ether")
-    print(f"Alice's balance is {a_bal} ether")
-    print(f"Bob's balance is {b_bal} ether")
+    a_bal = web3.fromWei(_alice.balance(), "gwei")
+    b_bal = web3.fromWei(_bob.balance(), "gwei")
+    print(f"Alice's balance is {a_bal} gwei")
+    print(f"Bob's balance is {b_bal} gwei")
 
 
 def user_bid(_ba, _user, _amount, _values, _fakes, _secrets):

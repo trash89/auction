@@ -1,4 +1,4 @@
-from brownie import accounts, config, accounts, network, SimpleAuction
+from brownie import config, network, SimpleAuction
 from scripts.helpful_scripts import get_account, update_front_end, LOCAL_BLOCKCHAIN_ENVIRONMENTS
 import time
 

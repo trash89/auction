@@ -4,6 +4,7 @@ import SupportedNetworks from "./SupportedNetworks";
 import GetContract from "./GetContract";
 import GetStatusIcon from "./GetStatusIcon";
 import GetSimpleAuction from "./GetSimpleAuction";
+import GetBlindAuction from "./GetBlindAuction";
 import ShowError from "./ShowError";
 
 export {
@@ -12,6 +13,7 @@ export {
   GetStatusIcon,
   GetContract,
   GetSimpleAuction,
+  GetBlindAuction,
   SupportedNetworks,
   ShowError,
 };
