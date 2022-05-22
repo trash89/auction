@@ -1,19 +1,10 @@
 {
   "31337": {
     "BlindAuction": [
-      "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-      "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
-    ],
-    "SimpleAuction": [
       "0x5FbDB2315678afecb367f032d93F642f64180aa3"
-    ]
-  },
-  "4": {
-    "BlindAuction": [
-      "0xA6AE6664B3CdfF824a8e1674c040B7787Ce4B217"
     ],
     "SimpleAuction": [
-      "0x08cD741B16aFBac1018fAb6e26BB27C088b9F5CB"
+      "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512"
     ]
   }
 }

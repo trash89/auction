@@ -183,12 +183,11 @@ const GetSimpleAuction = ({
             <TextField
               inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
               variant="standard"
-              type="text"
+              type="number"
               margin="normal"
               label="Value (ETH)"
               value={value}
               required
-              size="small"
               onChange={handleValue}
               disabled={disabled}
             />
@@ -202,7 +201,6 @@ const GetSimpleAuction = ({
           >
             <Button
               variant="contained"
-              size="small"
               disabled={
                 disabled ||
                 isLoadingBid ||
@@ -216,7 +214,6 @@ const GetSimpleAuction = ({
             </Button>
             <Button
               variant="contained"
-              size="small"
               disabled={
                 disabled ||
                 isLoadingBid ||
@@ -238,7 +235,6 @@ const GetSimpleAuction = ({
           >
             <Button
               variant="contained"
-              size="small"
               disabled={
                 disabled ||
                 isLoadingBid ||
