@@ -23,15 +23,9 @@ const GetBlindAuction = ({
   const [disabled, setDisabled] = useState(false);
   const [value, setValue] = useState("0");
   const [params, setParams] = useState({
-    value1: "0",
-    value2: "0",
-    value3: "0",
-    fake1: false,
-    fake2: false,
-    fake3: false,
-    secret1: "",
-    secret2: "",
-    secret3: "",
+    value: "0",
+    fake: false,
+    secret: "",
   });
 
   const {
@@ -95,6 +89,25 @@ const GetBlindAuction = ({
   );
 
   const {
+    error: errorReveal,
+    isError: isErrorReveal,
+    isLoading: isLoadingReveal,
+    write: writeReveal,
+    status: statusReveal,
+  } = useContractWrite(
+    {
+      addressOrName: contractAddress,
+      contractInterface: contractABI,
+    },
+    "reveal",
+    {
+      enabled: Boolean(
+        activeChain && account && addressNotZero(contractAddress)
+      ),
+    }
+  );
+
+  const {
     error: errorAuctionEnd,
     isError: isErrorAuctionEnd,
     isLoading: isLoadingAuctionEnd,
@@ -115,11 +128,45 @@ const GetBlindAuction = ({
 
   const handleBid = () => {
     let defaultValue = 0;
-    if (value && parseFloat(value) > 0) {
+    if (
+      value &&
+      parseFloat(value) > 0 &&
+      params.value &&
+      parseFloat(params.value) > 0
+    ) {
       setDisabled(true);
       defaultValue = utils.parseEther(value);
-      writeBid({ overrides: { value: BigNumber.from(defaultValue) } });
+      const formattedValue = BigNumber.from(params.value);
+      const formattedFake =
+        params.fake === true ? BigNumber.from("1") : BigNumber.from("0");
+      const formattedSecret = utils.formatBytes32String(params.secret);
+      const dataHex = utils.keccak256(
+        utils.defaultAbiCoder.encode(
+          ["uint256", "bool", "bytes32"],
+          [formattedValue, formattedFake, formattedSecret]
+        )
+      );
+      console.log(dataHex);
+      //0xfe2b8044d17580c644616323fd16194ac75108926b4d7c37bd87fcf9658901b8;
+      writeBid({ args: [dataHex], overrides: { value: defaultValue } });
       setValue("0");
+      setParams({ value: "0", fake: false, secret: "" });
+    }
+  };
+
+  const handleReveal = () => {
+    if (params.value && parseFloat(params.value) > 0) {
+      setDisabled(true);
+      const formattedValue = BigNumber.from(params.value);
+      const formattedFake =
+        params.fake === true ? BigNumber.from("1") : BigNumber.from("0");
+      const formattedSecret = utils.formatBytes32String(params.secret);
+      writeReveal({
+        args: [[formattedValue], [formattedFake], [formattedSecret]],
+        overrides: { gasLimit: 6721975 },
+      });
+      setValue("0");
+      setParams({ value: "0", fake: false, secret: "" });
     }
   };
 
@@ -143,11 +190,20 @@ const GetBlindAuction = ({
     if (statusWithdraw !== "loading") {
       if (disabled) setDisabled(false);
     }
+    if (statusReveal !== "loading") {
+      if (disabled) setDisabled(false);
+    }
     if (statusAuctionEnd !== "loading") {
       if (disabled) setDisabled(false);
     }
     // eslint-disable-next-line
-  }, [statusBalance, statusBid, statusWithdraw, statusAuctionEnd]);
+  }, [
+    statusBalance,
+    statusBid,
+    statusWithdraw,
+    statusReveal,
+    statusAuctionEnd,
+  ]);
 
   const currentDate = new Date();
   const biddingEndFormatted = new Date(biddingEnd).toLocaleString();
@@ -213,69 +269,19 @@ const GetBlindAuction = ({
                 inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
                 variant="standard"
                 type="number"
-                label="Value 1 (ETH)"
-                value={params.value1}
+                label="Value (ETH)"
+                value={params.value}
                 onChange={(e) =>
-                  setParams({ ...params, value1: e.target.value })
+                  setParams({ ...params, value: e.target.value })
                 }
                 disabled={disabled}
               />
-              <TextField
-                inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
-                variant="standard"
-                type="number"
-                label="Value 2 (ETH)"
-                value={params.value2}
-                onChange={(e) =>
-                  setParams({ ...params, value2: e.target.value })
-                }
-                disabled={disabled}
-              />
-              <TextField
-                inputProps={{ inputMode: "numeric", pattern: "[0-9]*" }}
-                variant="standard"
-                type="number"
-                label="Value 3 (ETH)"
-                value={params.value3}
-                onChange={(e) =>
-                  setParams({ ...params, value3: e.target.value })
-                }
-                disabled={disabled}
-              />
-            </Stack>
-
-            <Stack
-              direction="row"
-              justifyContent="flex-start"
-              alignItems="flex-start"
-              padding={1}
-              spacing={1}
-            >
               <TextField
                 variant="standard"
                 select
-                label="Fake 1"
-                value={params.fake1}
-                onChange={(e) =>
-                  setParams({ ...params, fake1: e.target.value })
-                }
-                disabled={disabled}
-              >
-                {fakes.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-
-              <TextField
-                variant="standard"
-                select
-                label="Fake 2"
-                value={params.fake2}
-                onChange={(e) =>
-                  setParams({ ...params, fake2: e.target.value })
-                }
+                label="Fake"
+                value={params.fake}
+                onChange={(e) => setParams({ ...params, fake: e.target.value })}
                 disabled={disabled}
               >
                 {fakes.map((option) => (
@@ -286,56 +292,11 @@ const GetBlindAuction = ({
               </TextField>
               <TextField
                 variant="standard"
-                select
-                label="Fake 3"
-                value={params.fake3}
-                onChange={(e) =>
-                  setParams({ ...params, fake3: e.target.value })
-                }
-                disabled={disabled}
-              >
-                {fakes.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Stack>
-
-            <Stack
-              direction="row"
-              justifyContent="flex-start"
-              alignItems="flex-start"
-              padding={1}
-              spacing={1}
-            >
-              <TextField
-                variant="standard"
                 type="text"
-                label="Secret 1"
-                value={params.secret1}
+                label="Secret"
+                value={params.secret}
                 onChange={(e) =>
-                  setParams({ ...params, secret1: e.target.value })
-                }
-                disabled={disabled}
-              />
-              <TextField
-                variant="standard"
-                type="text"
-                label="Secret 2"
-                value={params.secret2}
-                onChange={(e) =>
-                  setParams({ ...params, secret2: e.target.value })
-                }
-                disabled={disabled}
-              />
-              <TextField
-                variant="standard"
-                type="text"
-                label="Secret 3"
-                value={params.secret3}
-                onChange={(e) =>
-                  setParams({ ...params, secret3: e.target.value })
+                  setParams({ ...params, secret: e.target.value })
                 }
                 disabled={disabled}
               />
@@ -372,6 +333,7 @@ const GetBlindAuction = ({
                   disabled ||
                   isLoadingBid ||
                   isLoadingWithdraw ||
+                  isLoadingReveal ||
                   isLoadingAuctionEnd
                 }
                 onClick={handleBid}
@@ -385,6 +347,21 @@ const GetBlindAuction = ({
                   disabled ||
                   isLoadingBid ||
                   isLoadingWithdraw ||
+                  isLoadingReveal ||
+                  isLoadingAuctionEnd
+                }
+                onClick={handleReveal}
+                endIcon={<GetStatusIcon status={statusReveal} />}
+              >
+                Reveal?
+              </Button>
+              <Button
+                variant="contained"
+                disabled={
+                  disabled ||
+                  isLoadingBid ||
+                  isLoadingWithdraw ||
+                  isLoadingReveal ||
                   isLoadingAuctionEnd
                 }
                 onClick={handleWithdraw}
@@ -398,6 +375,7 @@ const GetBlindAuction = ({
                   disabled ||
                   isLoadingBid ||
                   isLoadingWithdraw ||
+                  isLoadingReveal ||
                   isLoadingAuctionEnd
                 }
                 onClick={handleAuctionEnd}
@@ -419,6 +397,9 @@ const GetBlindAuction = ({
               {isErrorBid && <ShowError flag={isErrorBid} error={errorBid} />}
               {isErrorWithdraw && (
                 <ShowError flag={isErrorWithdraw} error={errorWithdraw} />
+              )}
+              {isErrorReveal && (
+                <ShowError flag={isErrorReveal} error={errorReveal} />
               )}
               {isErrorAuctionEnd && (
                 <ShowError flag={isErrorAuctionEnd} error={errorAuctionEnd} />

@@ -5,22 +5,18 @@ import time
 from eth_account.messages import encode_defunct
 
 
-bidding_time = 24*60*60
+bidding_time = 5*60
 reveal_time = 5*60
 
 
 def main():
     blindAuction = deploy_blindAuction(bidding_time, reveal_time)
     # call_blindAuction(blindAuction)
-    # end_blindAuction(bidding_time, blindAuction)
+    #end_blindAuction(bidding_time, blindAuction)
 
 
 def deploy_blindAuction(bidding_time, reveal_time):
     alice = get_account()
-    if network.show_active() in LOCAL_BLOCKCHAIN_ENVIRONMENTS:
-        bob = get_account(index=1)
-    else:
-        bob = get_account(id="m2")
     print("Alice deploy BlindAuction contract...")
     blindAuction = BlindAuction.deploy(
         bidding_time, reveal_time, alice.address, {"from": alice})
@@ -35,6 +31,7 @@ def user_bid(_ba, _user, _amount, _values, _fakes, _secrets):
     sk = web3.solidityKeccak(["uint256", "bool", "bytes32"], [
                              convert.to_uint(_values, "uint256"), convert.to_bool(_fakes), web3.toHex(convert.to_bytes(_secrets, "bytes32"))])
     print(f"{_user} bid for {_amount}...")
+    print(sk.hex())
     tx = _ba.bid(sk.hex(), {"from": _user, "amount": _amount})
     tx.wait(1)
     print(f"{_user} bidded for {_amount}!")
@@ -42,7 +39,11 @@ def user_bid(_ba, _user, _amount, _values, _fakes, _secrets):
 
 def user_reveal(_ba, _user, _values, _fakes, _secrets):
     print(f"{_user} reveal his bids...")
-    tx = _ba.reveal(_values, _fakes, _secrets, {"from": _user})
+#    tx = _ba.reveal(_values, _fakes, _secrets, {
+#                    "from": _user, "gas_limit": 6721975, "allow_revert": True})
+    tx = _ba.reveal(_values, _fakes, _secrets, {
+                    "from": _user, "allow_revert": True})
+
     tx.wait(1)
     print(f"{_user} revealed his bids!")
 
