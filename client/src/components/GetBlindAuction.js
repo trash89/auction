@@ -136,19 +136,18 @@ const GetBlindAuction = ({
     ) {
       setDisabled(true);
       defaultValue = utils.parseEther(value);
-      const formattedValue = BigNumber.from(params.value);
+      const formattedValue = utils.parseEther(params.value);
       const formattedFake =
         params.fake === true ? BigNumber.from("1") : BigNumber.from("0");
       const formattedSecret = utils.formatBytes32String(params.secret);
-      const dataHex = utils.keccak256(
-        utils.defaultAbiCoder.encode(
-          ["uint256", "bool", "bytes32"],
-          [formattedValue, formattedFake, formattedSecret]
-        )
+      const dataHex = utils.solidityKeccak256(
+        ["uint256", "bool", "bytes32"],
+        [formattedValue, formattedFake, formattedSecret]
       );
-      console.log(dataHex);
-      //0xfe2b8044d17580c644616323fd16194ac75108926b4d7c37bd87fcf9658901b8;
-      writeBid({ args: [dataHex], overrides: { value: defaultValue } });
+      writeBid({
+        args: [dataHex],
+        overrides: { value: defaultValue, gasLimit: 6721975 },
+      });
       setValue("0");
       setParams({ value: "0", fake: false, secret: "" });
     }
@@ -157,7 +156,7 @@ const GetBlindAuction = ({
   const handleReveal = () => {
     if (params.value && parseFloat(params.value) > 0) {
       setDisabled(true);
-      const formattedValue = BigNumber.from(params.value);
+      const formattedValue = utils.parseEther(params.value);
       const formattedFake =
         params.fake === true ? BigNumber.from("1") : BigNumber.from("0");
       const formattedSecret = utils.formatBytes32String(params.secret);
@@ -172,12 +171,16 @@ const GetBlindAuction = ({
 
   const handleWithdraw = () => {
     setDisabled(true);
-    writeWithdraw();
+    writeWithdraw({
+      overrides: { gasLimit: 6721975 },
+    });
   };
 
   const handleAuctionEnd = () => {
     setDisabled(true);
-    writeAuctionEnd();
+    writeAuctionEnd({
+      overrides: { gasLimit: 6721975 },
+    });
   };
 
   useEffect(() => {
@@ -239,11 +242,21 @@ const GetBlindAuction = ({
               <Typography>
                 Highest Bid: {formatBalance(highestBid)} ETH
               </Typography>
-              <Typography>
-                Auction Bidding End : {biddingEndFormatted}
+              <Typography color={biddingEnd > currentDate ? "green" : "red"}>
+                Bidding End : {biddingEndFormatted}
               </Typography>
-              <Typography>Auction Reveal End : {revealEndFormatted}</Typography>
-              <Typography>Auction Ended : {ended.toString()}</Typography>
+              <Typography
+                color={
+                  revealEnd > currentDate && currentDate > biddingEnd
+                    ? "green"
+                    : "red"
+                }
+              >
+                Reveal End : {revealEndFormatted}
+              </Typography>
+              <Typography color={ended.toString() === "true" ? "red" : "green"}>
+                Ended? : {ended.toString()}
+              </Typography>
             </Paper>
             <Paper elevation={4}>
               <Typography>
@@ -327,34 +340,39 @@ const GetBlindAuction = ({
               padding={1}
               spacing={1}
             >
-              <Button
-                variant="contained"
-                disabled={
-                  disabled ||
-                  isLoadingBid ||
-                  isLoadingWithdraw ||
-                  isLoadingReveal ||
-                  isLoadingAuctionEnd
-                }
-                onClick={handleBid}
-                endIcon={<GetStatusIcon status={statusBid} />}
-              >
-                Bid?
-              </Button>
-              <Button
-                variant="contained"
-                disabled={
-                  disabled ||
-                  isLoadingBid ||
-                  isLoadingWithdraw ||
-                  isLoadingReveal ||
-                  isLoadingAuctionEnd
-                }
-                onClick={handleReveal}
-                endIcon={<GetStatusIcon status={statusReveal} />}
-              >
-                Reveal?
-              </Button>
+              {biddingEnd > currentDate && (
+                <Button
+                  variant="contained"
+                  disabled={
+                    disabled ||
+                    isLoadingBid ||
+                    isLoadingWithdraw ||
+                    isLoadingReveal ||
+                    isLoadingAuctionEnd
+                  }
+                  onClick={handleBid}
+                  endIcon={<GetStatusIcon status={statusBid} />}
+                >
+                  Bid?
+                </Button>
+              )}
+              {revealEnd > currentDate && currentDate > biddingEnd && (
+                <Button
+                  variant="contained"
+                  disabled={
+                    disabled ||
+                    isLoadingBid ||
+                    isLoadingWithdraw ||
+                    isLoadingReveal ||
+                    isLoadingAuctionEnd
+                  }
+                  onClick={handleReveal}
+                  endIcon={<GetStatusIcon status={statusReveal} />}
+                >
+                  Reveal?
+                </Button>
+              )}
+
               <Button
                 variant="contained"
                 disabled={
@@ -369,20 +387,24 @@ const GetBlindAuction = ({
               >
                 Withdraw?
               </Button>
-              <Button
-                variant="contained"
-                disabled={
-                  disabled ||
-                  isLoadingBid ||
-                  isLoadingWithdraw ||
-                  isLoadingReveal ||
-                  isLoadingAuctionEnd
-                }
-                onClick={handleAuctionEnd}
-                endIcon={<GetStatusIcon status={statusAuctionEnd} />}
-              >
-                End Auction?
-              </Button>
+              {revealEnd < currentDate &&
+                currentDate < biddingEnd &&
+                ended.toString() === "false" && (
+                  <Button
+                    variant="contained"
+                    disabled={
+                      disabled ||
+                      isLoadingBid ||
+                      isLoadingWithdraw ||
+                      isLoadingReveal ||
+                      isLoadingAuctionEnd
+                    }
+                    onClick={handleAuctionEnd}
+                    endIcon={<GetStatusIcon status={statusAuctionEnd} />}
+                  >
+                    End Auction?
+                  </Button>
+                )}
             </Stack>
             <Stack
               direction="row"

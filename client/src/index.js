@@ -17,17 +17,17 @@ import {
 } from "@rainbow-me/rainbowkit";
 import { createClient, chain, WagmiProvider } from "wagmi";
 
-if (
-  !process.env.REACT_APP_RINKEBY_URL ||
-  !process.env.REACT_APP_KOVAN_URL ||
-  !process.env.REACT_APP_GRAPH_URL
-)
-  throw new Error(
-    "Missing environment variables. Make sure to set your .env file."
-  );
+// if (
+//   !process.env.REACT_APP_RINKEBY_URL ||
+//   !process.env.REACT_APP_KOVAN_URL ||
+//   !process.env.REACT_APP_GRAPH_URL
+// )
+//   throw new Error(
+//     "Missing environment variables. Make sure to set your .env file."
+//   );
 
 const { provider, chains } = configureChains(
-  [chain.hardhat, chain.kovan, chain.rinkeby],
+  [chain.hardhat],
   [apiProvider.alchemy(process.env.ALCHEMY_ID), apiProvider.fallback()]
 );
 

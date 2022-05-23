@@ -63,6 +63,7 @@ def call_blindAuction(blindAuction):
         "utf-8"), "secret2".encode("utf-8"), "secret3".encode("utf-8")]
     user_bid(blindAuction, alice, "1 gwei",
              alice_values[0], alice_fakes[0], alice_secrets[0])
+    return
     user_bid(blindAuction, alice, "2 gwei",
              alice_values[1], alice_fakes[1], alice_secrets[1])
     user_bid(blindAuction, alice, "3 gwei",
