@@ -4,12 +4,11 @@ import time
 
 
 def main():
-    # 5 minutes
-    bidding_time = 5*60
+    bidding_time = 60*60  # 1h
 
     simpleAuction = deploy_simpleAuction(bidding_time)
     # call_simpleAuction(simpleAuction)
-    #end_simpleAuction(bidding_time, simpleAuction)
+    # end_simpleAuction(bidding_time, simpleAuction)
 
 
 def deploy_simpleAuction(bidding_time):

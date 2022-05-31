@@ -4,18 +4,15 @@ import "normalize.css";
 import "@rainbow-me/rainbowkit/styles.css";
 import "./index.css";
 import App from "./App";
-
+import themeOptions from "./theme";
 import { ApolloClient, ApolloProvider, InMemoryCache } from "@apollo/client";
 
 import { createTheme, ThemeProvider } from "@mui/material/styles";
 
-import {
-  apiProvider,
-  configureChains,
-  RainbowKitProvider,
-  getDefaultWallets,
-} from "@rainbow-me/rainbowkit";
-import { createClient, chain, WagmiProvider } from "wagmi";
+import { RainbowKitProvider, getDefaultWallets } from "@rainbow-me/rainbowkit";
+import { createClient, chain, configureChains, WagmiConfig } from "wagmi";
+import { alchemyProvider } from "wagmi/providers/alchemy";
+import { publicProvider } from "wagmi/providers/public";
 
 // if (
 //   !process.env.REACT_APP_RINKEBY_URL ||
@@ -27,8 +24,11 @@ import { createClient, chain, WagmiProvider } from "wagmi";
 //   );
 
 const { provider, chains } = configureChains(
-  [chain.hardhat],
-  [apiProvider.alchemy(process.env.ALCHEMY_ID), apiProvider.fallback()]
+  [
+    //chain.hardhat,
+    chain.rinkeby,
+  ],
+  [alchemyProvider({ alchemyId: process.env.ALCHEMY_ID }), publicProvider()]
 );
 
 const { connectors } = getDefaultWallets({
@@ -47,78 +47,19 @@ const apolloClient = new ApolloClient({
   uri: process.env.REACT_APP_GRAPH_URL,
 });
 
-export const themeOptions = {
-  palette: {
-    type: "light",
-    primary: {
-      main: "#1976d2",
-    },
-    secondary: {
-      main: "rgb(220, 0, 78)",
-    },
-    background: {
-      default: "#fff",
-      paper: "#fff",
-    },
-  },
-  overrides: {
-    MuiAppBar: {
-      colorInherit: {
-        backgroundColor: "#689f38",
-        color: "#fff",
-      },
-    },
-    MuiButton: {
-      root: {
-        background: "linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)",
-        border: 0,
-        borderRadius: 3,
-        boxShadow: "0 3px 5px 2px rgba(255, 105, 135, .3)",
-        color: "white",
-        height: 48,
-        padding: "0 30px",
-      },
-    },
-  },
-  props: {
-    MuiList: {
-      dense: true,
-    },
-    MuiMenuItem: {
-      dense: true,
-    },
-    MuiTable: {
-      size: "small",
-    },
-    MuiButton: {
-      size: "small",
-    },
-    MuiIconButton: {
-      size: "small",
-    },
-    MuiInputBase: {
-      margin: "dense",
-    },
-    MuiTextField: {
-      margin: "dense",
-      size: "small",
-    },
-  },
-};
-
 const theme = createTheme(themeOptions);
 
 ReactDOM.render(
   // <React.StrictMode>
-  <WagmiProvider client={wagmiClient}>
+  <WagmiConfig client={wagmiClient}>
     <RainbowKitProvider chains={chains}>
-      <ApolloProvider client={apolloClient}>
-        <ThemeProvider theme={theme}>
-          <App />
-        </ThemeProvider>
-      </ApolloProvider>
+      {/* <ApolloProvider client={apolloClient}> */}
+      <ThemeProvider theme={theme}>
+        <App />
+      </ThemeProvider>
+      {/* </ApolloProvider> */}
     </RainbowKitProvider>
-  </WagmiProvider>,
+  </WagmiConfig>,
   // </React.StrictMode>,
   document.getElementById("root")
 );

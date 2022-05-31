@@ -3,6 +3,7 @@ import { BigNumber, utils, constants } from "ethers";
 import { addressNotZero } from "../utils/utils";
 
 const useDetailsSimpleAuction = (activeChain, contractAddress, contractABI) => {
+  const isEnabled = Boolean(activeChain && addressNotZero(contractAddress));
   const {
     data: beneficiary,
     isLoading: isLoadingBeneficiary,
@@ -15,8 +16,8 @@ const useDetailsSimpleAuction = (activeChain, contractAddress, contractABI) => {
     },
     "beneficiary",
     {
-      watch: Boolean(activeChain && addressNotZero(contractAddress)),
-      enabled: Boolean(activeChain && addressNotZero(contractAddress)),
+      watch: isEnabled,
+      enabled: isEnabled,
     }
   );
 
@@ -32,8 +33,8 @@ const useDetailsSimpleAuction = (activeChain, contractAddress, contractABI) => {
     },
     "auctionEndTime",
     {
-      watch: Boolean(activeChain && addressNotZero(contractAddress)),
-      enabled: Boolean(activeChain && addressNotZero(contractAddress)),
+      watch: isEnabled,
+      enabled: isEnabled,
     }
   );
 
@@ -49,8 +50,8 @@ const useDetailsSimpleAuction = (activeChain, contractAddress, contractABI) => {
     },
     "highestBidder",
     {
-      watch: Boolean(activeChain && addressNotZero(contractAddress)),
-      enabled: Boolean(activeChain && addressNotZero(contractAddress)),
+      watch: isEnabled,
+      enabled: isEnabled,
     }
   );
 
@@ -66,8 +67,25 @@ const useDetailsSimpleAuction = (activeChain, contractAddress, contractABI) => {
     },
     "highestBid",
     {
-      watch: Boolean(activeChain && addressNotZero(contractAddress)),
-      enabled: Boolean(activeChain && addressNotZero(contractAddress)),
+      watch: isEnabled,
+      enabled: isEnabled,
+    }
+  );
+
+  const {
+    data: ended,
+    isLoading: isLoadingEnded,
+    isError: isErrorEnded,
+    isSuccess: isSuccessEnded,
+  } = useContractRead(
+    {
+      addressOrName: contractAddress,
+      contractInterface: contractABI,
+    },
+    "ended",
+    {
+      watch: isEnabled,
+      enabled: isEnabled,
     }
   );
 
@@ -90,6 +108,7 @@ const useDetailsSimpleAuction = (activeChain, contractAddress, contractABI) => {
       isLoadingHighestBid || isErrorHighestBid || !isSuccessHighestBid
         ? BigNumber.from("0")
         : highestBid,
+    ended: isLoadingEnded || isErrorEnded || !isSuccessEnded ? true : ended,
   };
 };
 

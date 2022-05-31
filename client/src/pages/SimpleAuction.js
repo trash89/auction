@@ -1,30 +1,30 @@
-import Grid from "@mui/material/Grid";
+import Stack from "@mui/material/Stack";
 import Paper from "@mui/material/Paper";
 
 import { useNetwork, useAccount } from "wagmi";
 import { addressNotZero } from "../utils/utils";
 
-import {
-  SupportedNetworks,
-  GetContract,
-  GetSimpleAuction,
-} from "../components";
-import { useIsMounted } from "../hooks";
+import { SupportedNetworks, GetSimpleAuction } from "../components";
+import { useIsMounted, useGetContract } from "../hooks";
 
 const SimpleAuction = () => {
   const isMounted = useIsMounted();
   const { activeChain } = useNetwork();
 
-  const { contractAddress, contractABI } = GetContract("SimpleAuction");
+  const { address: contractAddress, ABI: contractABI } =
+    useGetContract("SimpleAuction");
   const {
     data: account,
     error: errorAccount,
     isError: isErrorAccount,
     isLoading: isLoadingAccount,
   } = useAccount({
-    enabled: Boolean(activeChain && addressNotZero(contractAddress)),
+    enabled: Boolean(
+      isMounted && activeChain && addressNotZero(contractAddress)
+    ),
   });
 
+  if (!isMounted) return <></>;
   if (!activeChain) return <SupportedNetworks />;
   if (isLoadingAccount) return <div>Loading account…</div>;
   if (isErrorAccount)
@@ -35,22 +35,22 @@ const SimpleAuction = () => {
     );
 
   return (
-    <>
-      {isMounted && (
-        <Grid container direction="row" padding={1} spacing={1}>
-          <Grid item>
-            <Paper elevation={4}>
-              <GetSimpleAuction
-                activeChain={activeChain}
-                contractAddress={contractAddress}
-                contractABI={contractABI}
-                account={account}
-              />
-            </Paper>
-          </Grid>
-        </Grid>
-      )}
-    </>
+    <Stack
+      direction="row"
+      spacing={1}
+      padding={1}
+      justifyContent="flex-start"
+      alignItems="flex-start"
+    >
+      <Paper elevation={4}>
+        <GetSimpleAuction
+          activeChain={activeChain}
+          contractAddress={contractAddress}
+          contractABI={contractABI}
+          account={account}
+        />
+      </Paper>
+    </Stack>
   );
 };
 

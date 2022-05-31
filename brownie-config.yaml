@@ -18,15 +18,19 @@ networks:
   kovan:
     verify: False
     update_frontend: True
+    numConfirmations: 1
   rinkeby:
     verify: False
     update_frontend: True
+    numConfirmations: 1
   hh-local:
     verify: False
     update_frontend: True
-  hh1-local:
+    numConfirmations: 1
+  hardhat:
     verify: False
     update_frontend: True
+    numConfirmations: 1
 dotenv: .env
 wallets:
   from_key: ${PRIVATE_KEY}

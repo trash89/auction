@@ -1,8 +1,14 @@
-# Fullstack Ethereum React Application for the Auctions contracts
+# Fullstack Ethereum React Application for the Auction contracts
 
-Study case of the Auction contracts, from [Solidity documentation, Blind Auction](https://docs.soliditylang.org/en/latest/solidity-by-example.html#blind-auction)
+Study case of the Auction contracts, from [Solidity documentation, Simple Auction](https://docs.soliditylang.org/en/latest/solidity-by-example.html#simple-open-auction)
+and
+[Solidity documentation, Blind Auction](https://docs.soliditylang.org/en/latest/solidity-by-example.html#blind-auction)
 
-## client application on Hardhat network
+## Frontend on the Rinkeby Testnet
+
+The application is live on Netlify with the Ballot contract deployed on Rinkeby
+
+https://auctionfullstack.netlify.app/
 
 ![Simple Auction webapp ](./simpleAuction_frontend.png)
 
@@ -20,19 +26,11 @@ To install the required packages.
 
 ### `configure .env`
 
-Configure .env file in the auction folder
+Configure .env file in the auction folder.
 An example of .env file :
 
 ```bash .env
-PRIVATE_KEY=0xabcdef
-RINKEBY_RPC_URL ="https://eth-rinkeby.alchemyapi.io/v2/your-api-key"
 UPDATE_FRONT_END=yes
-```
-
-### `compile the smartcontracts`
-
-```
-brownie compile
 ```
 
 ### `start hardhat`
@@ -53,8 +51,21 @@ brownie networks add Ethereum hh-local host=http://127.0.0.1 chainid=31337
 
 ### `deploy on hh-local`
 
-The deployment of SimpleAuction and BlindAuction contracts use a bidding time and reveal time of 5 minutes.
+Modify client/src/index.js to include the chain.hardhat. Uncomment the hardhat line:
+
+```
+const { chains, provider } = configureChains(
+  [
+    //chain.hardhat,
+    chain.rinkeby,
+  ],
+  [alchemyProvider({ alchemyId: process.env.ALCHEMY_ID }), publicProvider()]
+);
+```
+
+The deployment of SimpleAuction and BlindAuction contracts use a bidding time and reveal time of 1 hour.
 You can change these values in the deployment scripts.
+
 In the same auction folder, deploy the contracts :
 
 ```bash

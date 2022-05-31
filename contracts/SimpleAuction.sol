@@ -17,7 +17,7 @@ contract SimpleAuction {
 
     // Set to true at the end, disallows any change.
     // By default initialized to `false`.
-    bool ended;
+    bool public ended;
 
     // Events that will be emitted on changes.
     event HighestBidIncreased(address bidder, uint256 amount);
@@ -46,6 +46,17 @@ contract SimpleAuction {
         beneficiary = beneficiaryAddress;
         auctionEndTime = block.timestamp + biddingTime;
     }
+
+    /// Create a simple auction with `biddingTime`
+    /// seconds bidding time on behalf of the
+    /// beneficiary address `beneficiaryAddress`.
+    function newAuction(uint256 endTime, address payable beneficiaryAddress) external payable {
+        require(!ended,"Current auction is not ended");
+        beneficiary = beneficiaryAddress;
+        auctionEndTime = endTime;
+        ended=false;
+    }
+
 
     /// Bid on the auction with the value sent
     /// together with this transaction.

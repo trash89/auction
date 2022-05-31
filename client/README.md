@@ -1,6 +1,10 @@
 # Client Application for the Simple&Blind Auction contracts
 
-## client application on Hardhat network
+## Frontend on the Rinkeby Testnet
+
+The application is live on Netlify with the Ballot contract deployed on Rinkeby
+
+https://auctionfullstack.netlify.app/
 
 ![Simple Auction webapp ](../simpleAuction_frontend.png)
 

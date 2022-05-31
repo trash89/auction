@@ -4,9 +4,9 @@ from scripts.helpful_scripts import get_account, update_front_end, LOCAL_BLOCKCH
 import time
 from eth_account.messages import encode_defunct
 
-
-bidding_time = 5*60
-reveal_time = 5*60
+# 1h
+bidding_time = 60*60
+reveal_time = 60*60
 
 
 def main():

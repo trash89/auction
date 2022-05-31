@@ -46,7 +46,11 @@ const MenuAppBar = () => {
             Blind Auction
           </NavLink>
 
-          <ConnectButton />
+          <ConnectButton
+            accountStatus="address"
+            chainStatus="name"
+            showBalance={true}
+          />
         </Toolbar>
       </AppBar>
     </Box>

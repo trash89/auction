@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity 0.8.14;
 import "./console.sol";
-
 contract BlindAuction {
     struct Bid {
         bytes32 blindedBid;
         uint256 deposit;
     }
-
     address payable public beneficiary;
     uint256 public biddingEnd;
     uint256 public revealEnd;
@@ -45,6 +43,18 @@ contract BlindAuction {
     modifier onlyAfter(uint256 time) {
         if (block.timestamp <= time) revert TooEarly(time);
         _;
+    }
+
+    function newAuction(
+        uint256 _biddingEnd,
+        uint256 _revealEnd,
+        address payable beneficiaryAddress
+    ) external payable {
+        require(!ended,"Current auction is not ended");
+        beneficiary = beneficiaryAddress;
+        biddingEnd = _biddingEnd;
+        revealEnd = _revealEnd;
+        ended=false;
     }
 
     constructor(

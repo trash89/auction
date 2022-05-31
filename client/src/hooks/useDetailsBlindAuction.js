@@ -3,6 +3,7 @@ import { BigNumber, utils, constants } from "ethers";
 import { addressNotZero } from "../utils/utils";
 
 const useDetailsBlindAuction = (activeChain, contractAddress, contractABI) => {
+  const isEnabled = Boolean(activeChain && addressNotZero(contractAddress));
   const {
     data: beneficiary,
     isLoading: isLoadingBeneficiary,
@@ -15,8 +16,8 @@ const useDetailsBlindAuction = (activeChain, contractAddress, contractABI) => {
     },
     "beneficiary",
     {
-      watch: Boolean(activeChain && addressNotZero(contractAddress)),
-      enabled: Boolean(activeChain && addressNotZero(contractAddress)),
+      watch: isEnabled,
+      enabled: isEnabled,
     }
   );
 
@@ -32,8 +33,8 @@ const useDetailsBlindAuction = (activeChain, contractAddress, contractABI) => {
     },
     "highestBidder",
     {
-      watch: Boolean(activeChain && addressNotZero(contractAddress)),
-      enabled: Boolean(activeChain && addressNotZero(contractAddress)),
+      watch: isEnabled,
+      enabled: isEnabled,
     }
   );
 
@@ -49,8 +50,8 @@ const useDetailsBlindAuction = (activeChain, contractAddress, contractABI) => {
     },
     "highestBid",
     {
-      watch: Boolean(activeChain && addressNotZero(contractAddress)),
-      enabled: Boolean(activeChain && addressNotZero(contractAddress)),
+      watch: isEnabled,
+      enabled: isEnabled,
     }
   );
 
@@ -66,8 +67,8 @@ const useDetailsBlindAuction = (activeChain, contractAddress, contractABI) => {
     },
     "biddingEnd",
     {
-      watch: Boolean(activeChain && addressNotZero(contractAddress)),
-      enabled: Boolean(activeChain && addressNotZero(contractAddress)),
+      watch: isEnabled,
+      enabled: isEnabled,
     }
   );
 
@@ -83,8 +84,8 @@ const useDetailsBlindAuction = (activeChain, contractAddress, contractABI) => {
     },
     "revealEnd",
     {
-      watch: Boolean(activeChain && addressNotZero(contractAddress)),
-      enabled: Boolean(activeChain && addressNotZero(contractAddress)),
+      watch: isEnabled,
+      enabled: isEnabled,
     }
   );
 
@@ -100,8 +101,8 @@ const useDetailsBlindAuction = (activeChain, contractAddress, contractABI) => {
     },
     "ended",
     {
-      watch: Boolean(activeChain && addressNotZero(contractAddress)),
-      enabled: Boolean(activeChain && addressNotZero(contractAddress)),
+      watch: isEnabled,
+      enabled: isEnabled,
     }
   );
 
@@ -126,7 +127,7 @@ const useDetailsBlindAuction = (activeChain, contractAddress, contractABI) => {
       isLoadingRevealEnd || isErrorRevealEnd || !isSuccessRevealEnd
         ? BigNumber.from("0")
         : revealEnd * 1000, ///in miliseconds
-    ended: isLoadingEnded || isErrorEnded || !isSuccessEnded ? false : ended,
+    ended: isLoadingEnded || isErrorEnded || !isSuccessEnded ? true : ended,
   };
 };
 
