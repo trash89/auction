@@ -421,6 +421,7 @@ const GetBlindAuction = ({
         spacing={1}
       >
         <TextField
+          autoFocus
           variant="outlined"
           size="small"
           type="number"
