@@ -1,24 +1,17 @@
-const themeOptions = {
+export const themeOptions = {
   palette: {
     type: "light",
     primary: {
-      main: "#1976d2",
+      main: "#3f51b5",
     },
     secondary: {
-      main: "rgb(220, 0, 78)",
-    },
-    background: {
-      default: "#fff",
-      paper: "#fff",
+      main: "#f50057",
     },
   },
+  shape: {
+    borderRadius: 4,
+  },
   overrides: {
-    MuiAppBar: {
-      colorInherit: {
-        backgroundColor: "#689f38",
-        color: "#fff",
-      },
-    },
     MuiButton: {
       root: {
         background: "linear-gradient(45deg, #FE6B8B 30%, #FF8E53 90%)",
@@ -44,11 +37,36 @@ const themeOptions = {
     MuiButton: {
       size: "small",
     },
+    MuiButtonGroup: {
+      size: "small",
+    },
+    MuiCheckbox: {
+      size: "small",
+    },
+    MuiFab: {
+      size: "small",
+    },
+    MuiFormControl: {
+      margin: "dense",
+      size: "small",
+    },
+    MuiFormHelperText: {
+      margin: "dense",
+    },
     MuiIconButton: {
       size: "small",
     },
     MuiInputBase: {
       margin: "dense",
+    },
+    MuiInputLabel: {
+      margin: "dense",
+    },
+    MuiRadio: {
+      size: "small",
+    },
+    MuiSwitch: {
+      size: "small",
     },
     MuiTextField: {
       margin: "dense",
@@ -56,4 +74,3 @@ const themeOptions = {
     },
   },
 };
-export default themeOptions;

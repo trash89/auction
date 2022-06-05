@@ -69,8 +69,8 @@ You can change these values in the deployment scripts.
 In the same auction folder, deploy the contracts :
 
 ```bash
-brownie run scripts/deploySimpleAuction.py --network hh-local
-brownie run scripts/deployBlindAuction.py --network hh-local
+brownie run scripts/brownie/deploySimpleAuction.py --network hh-local
+brownie run scripts/brownie/deployBlindAuction.py --network hh-local
 ```
 
 ### `configure and start the client app`
@@ -92,6 +92,7 @@ An example of .env file :
 
 ```bash .env
 GENERATE_SOURCEMAP=false
+REACT_APP_ALCHEMY_ID="your-api-key"
 ```
 
 ### `start the application`

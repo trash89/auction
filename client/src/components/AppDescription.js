@@ -21,13 +21,22 @@ const AppDescription = () => {
         </Typography>
 
         <Typography component="div" gutterBottom={false} paragraph={true}>
-          <div>
+          <p>
             This repository contains an Ethereum Fullstack application, using
-            two smartcontracts: Simple Auction and Blind Auction
-          </div>
+            two smartcontracts:{" "}
+            <a href="https://docs.soliditylang.org/en/latest/solidity-by-example.html#simple-open-auction">
+              Simple Auction
+            </a>{" "}
+            and{" "}
+            <a href="https://docs.soliditylang.org/en/latest/solidity-by-example.html#blind-auction">
+              Blind Auction
+            </a>
+            , from Solidity Documentation.
+          </p>
+
           <div>
-            Several software components and libraries are used in this fullstack
-            application:
+            Several software components and libraries are used for this
+            fullstack application:
           </div>
           <Stack
             direction="row"

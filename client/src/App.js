@@ -1,5 +1,10 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { SimpleAuction, BlindAuction, SharedLayout, Error } from "./pages";
+import {
+  SimpleAuctionContainer,
+  BlindAuctionContainer,
+  SharedLayout,
+  Error,
+} from "./pages";
 import { useIsMounted } from "./hooks";
 
 function App() {
@@ -10,9 +15,9 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<SharedLayout />}>
-            <Route index element={<SimpleAuction />} />
-            <Route path="/simpleauction" element={<SimpleAuction />} />
-            <Route path="/blindauction" element={<BlindAuction />} />
+            <Route index element={<SimpleAuctionContainer />} />
+            <Route path="/simpleauction" element={<SimpleAuctionContainer />} />
+            <Route path="/blindauction" element={<BlindAuctionContainer />} />
             <Route path="*" element={<Error />} />
           </Route>
         </Routes>

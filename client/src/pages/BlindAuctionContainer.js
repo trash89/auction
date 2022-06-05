@@ -7,7 +7,7 @@ import { addressNotZero } from "../utils/utils";
 import { SupportedNetworks, GetBlindAuction } from "../components";
 import { useIsMounted, useGetContract } from "../hooks";
 
-const BlindAuction = () => {
+const BlindAuctionContainer = () => {
   const isMounted = useIsMounted();
   const { activeChain } = useNetwork();
 
@@ -54,4 +54,4 @@ const BlindAuction = () => {
   );
 };
 
-export default BlindAuction;
+export default BlindAuctionContainer;

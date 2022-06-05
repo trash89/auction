@@ -7,7 +7,7 @@ import { addressNotZero } from "../utils/utils";
 import { SupportedNetworks, GetSimpleAuction } from "../components";
 import { useIsMounted, useGetContract } from "../hooks";
 
-const SimpleAuction = () => {
+const SimpleAuctionContainer = () => {
   const isMounted = useIsMounted();
   const { activeChain } = useNetwork();
 
@@ -54,4 +54,4 @@ const SimpleAuction = () => {
   );
 };
 
-export default SimpleAuction;
+export default SimpleAuctionContainer;

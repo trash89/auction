@@ -10,15 +10,14 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 
 import { BigNumber, utils } from "ethers";
-import {
-  addressNotZero,
-  formatBalance,
-  shortenAddress,
-  getNumConfirmations,
-} from "../utils/utils";
+import { addressNotZero, formatBalance, shortenAddress } from "../utils/utils";
 
-import { useBalance, useContractWrite, useWaitForTransaction } from "wagmi";
-import { useIsMounted, useDetailsSimpleAuction } from "../hooks";
+import { useBalance } from "wagmi";
+import {
+  useIsMounted,
+  useDetailsSimpleAuction,
+  useGetFuncWrite,
+} from "../hooks";
 import { GetStatusIcon, ShowError } from "../components";
 
 const GetSimpleAuction = ({
@@ -32,11 +31,18 @@ const GetSimpleAuction = ({
   const isEnabled = Boolean(
     isMounted && activeChain && account && addressNotZero(contractAddress)
   );
-  const numConfirmations = getNumConfirmations(activeChain);
   const [openDialog, setOpenDialog] = useState(false);
-  const [value, setValue] = useState("0");
-  const [newBeneficiary, setNewBeneficiary] = useState("");
-  const [endTime, setEndTime] = useState("");
+  const [input, setInput] = useState({
+    newBeneficiary: "",
+    endTime: "",
+    value: "0",
+  });
+  const [isErrorInput, setIsErrorInput] = useState({
+    newBeneficiary: false,
+    endTime: false,
+    value: false,
+  });
+
   const {
     data: balance,
     isError: isErrorBalance,
@@ -51,121 +57,66 @@ const GetSimpleAuction = ({
 
   const { beneficiary, auctionEndTime, highestBider, highestBid, ended } =
     useDetailsSimpleAuction(activeChain, contractAddress, contractABI);
+
+  // bid function
   const {
-    data: dataBid,
     error: errorBid,
     isError: isErrorBid,
-    isLoading: isLoadingBid,
     write: writeBid,
     status: statusBid,
-  } = useContractWrite(
-    {
-      addressOrName: contractAddress,
-      contractInterface: contractABI,
-    },
+    statusWait: statusBidWait,
+  } = useGetFuncWrite(
     "bid",
-    {
-      enabled: isEnabled,
-    }
+    activeChain,
+    contractAddress,
+    contractABI,
+    isEnabled
   );
-  const { status: statusBidWait } = useWaitForTransaction({
-    hash: dataBid?.hash,
-    wait: dataBid?.wait,
-    confirmations: numConfirmations,
-    enabled: isEnabled,
-  });
 
+  // withdraw function
   const {
-    data: dataWithdraw,
     error: errorWithdraw,
     isError: isErrorWithdraw,
-    isLoading: isLoadingWithdraw,
     write: writeWithdraw,
     status: statusWithdraw,
-  } = useContractWrite(
-    {
-      addressOrName: contractAddress,
-      contractInterface: contractABI,
-    },
+    statusWait: statusWithdrawWait,
+  } = useGetFuncWrite(
     "withdraw",
-    {
-      enabled: isEnabled,
-    }
+    activeChain,
+    contractAddress,
+    contractABI,
+    isEnabled
   );
-  const { status: statusWithdrawWait } = useWaitForTransaction({
-    hash: dataWithdraw?.hash,
-    wait: dataWithdraw?.wait,
-    confirmations: numConfirmations,
-    enabled: isEnabled,
-  });
 
+  // auctionEnd function
   const {
-    data: dataAuctionEnd,
     error: errorAuctionEnd,
     isError: isErrorAuctionEnd,
-    isLoading: isLoadingAuctionEnd,
     write: writeAuctionEnd,
     status: statusAuctionEnd,
-  } = useContractWrite(
-    {
-      addressOrName: contractAddress,
-      contractInterface: contractABI,
-    },
+    statusWait: statusAuctionEndWait,
+  } = useGetFuncWrite(
     "auctionEnd",
-    {
-      enabled: isEnabled,
-    }
+    activeChain,
+    contractAddress,
+    contractABI,
+    isEnabled
   );
-  const { status: statusAuctionEndWait } = useWaitForTransaction({
-    hash: dataAuctionEnd?.hash,
-    wait: dataAuctionEnd?.wait,
-    confirmations: numConfirmations,
-    enabled: isEnabled,
-  });
 
+  // newAuction function
   const {
-    data: dataNewAuction,
     error: errorNewAuction,
     isError: isErrorNewAuction,
-    isLoading: isLoadingNewAuction,
     write: writeNewAuction,
     status: statusNewAuction,
-  } = useContractWrite(
-    {
-      addressOrName: contractAddress,
-      contractInterface: contractABI,
-    },
+    statusWait: statusNewAuctionWait,
+  } = useGetFuncWrite(
     "newAuction",
-    {
-      enabled: isEnabled,
-    }
+    activeChain,
+    contractAddress,
+    contractABI,
+    isEnabled
   );
-  const { status: statusNewAuctionWait } = useWaitForTransaction({
-    hash: dataNewAuction?.hash,
-    wait: dataNewAuction?.wait,
-    confirmations: numConfirmations,
-    enabled: isEnabled,
-  });
-
-  const handleBid = () => {
-    let defaultValue = 0;
-    if (value && parseFloat(value) > 0) {
-      defaultValue = utils.parseEther(value);
-      setDisabled(true);
-      writeBid({ overrides: { value: BigNumber.from(defaultValue) } });
-      setValue("0");
-    }
-  };
-
-  const handleWithdraw = () => {
-    setDisabled(true);
-    writeWithdraw();
-  };
-
-  const handleAuctionEnd = () => {
-    setDisabled(true);
-    writeAuctionEnd();
-  };
 
   useEffect(() => {
     if (
@@ -180,6 +131,7 @@ const GetSimpleAuction = ({
       statusNewAuctionWait !== "loading"
     ) {
       if (disabled) setDisabled(false);
+      setInput({ newBeneficiary: "", endTime: "", value: "0" });
     }
     // eslint-disable-next-line
   }, [
@@ -200,26 +152,70 @@ const GetSimpleAuction = ({
       event.target.value === "cancel"
     ) {
       setOpenDialog(false);
-      setNewBeneficiary("");
-      setEndTime("");
+      setInput({ ...input, newBeneficiary: "", endTime: "" });
     } else {
-      if (newBeneficiary && utils.isAddress(newBeneficiary)) {
-        const currentDate = new Date();
-        const localDate = new Date(endTime);
-        if (localDate > currentDate) {
-          const newEndTime = BigNumber.from(localDate.getTime() / 1000);
-          setDisabled(true);
-          writeNewAuction({ args: [newEndTime, newBeneficiary] });
-          setOpenDialog(false);
+      if (input.newBeneficiary && utils.isAddress(input.newBeneficiary)) {
+        if (input.endTime) {
+          const currentDate = new Date();
+          const localDate = new Date(input.endTime);
+          if (localDate > currentDate) {
+            const newEndTime = BigNumber.from(localDate.getTime() / 1000);
+            setDisabled(true);
+            writeNewAuction({ args: [newEndTime, input.newBeneficiary] });
+            setOpenDialog(false);
+          } else {
+            setIsErrorInput({ ...isErrorInput, endTime: true });
+          }
+        } else {
+          setIsErrorInput({ ...isErrorInput, endTime: true });
         }
+      } else {
+        setIsErrorInput({ ...isErrorInput, newBeneficiary: true });
       }
     }
   };
 
+  const handleValue = (e) => {
+    setInput({ ...input, value: e.target.value });
+    if (isErrorInput.value) setIsErrorInput({ ...isErrorInput, value: false });
+  };
+
+  const handleNewBeneficiary = (e) => {
+    setInput({ ...input, newBeneficiary: e.target.value });
+    if (isErrorInput.newBeneficiary)
+      setIsErrorInput({ ...isErrorInput, newBeneficiary: false });
+  };
+  const handleEndTime = (e) => {
+    setInput({ ...input, endTime: e.target.value });
+    if (isErrorInput.endTime)
+      setIsErrorInput({ ...isErrorInput, endTime: false });
+  };
+
+  const handleBid = () => {
+    let localValue = 0;
+    if (input.value && input.value !== "" && parseFloat(input.value) > 0) {
+      localValue = BigNumber.from(utils.parseEther(input.value));
+      setDisabled(true);
+      writeBid({ overrides: { value: localValue } });
+    } else {
+      setIsErrorInput({ ...isErrorInput, value: true });
+    }
+  };
+
+  const handleWithdraw = () => {
+    setDisabled(true);
+    writeWithdraw();
+  };
+
+  const handleAuctionEnd = () => {
+    setDisabled(true);
+    writeAuctionEnd();
+  };
+
+  if (!isMounted) return <></>;
   const currentDate = new Date();
   const auctionEndTimeFormatted = new Date(auctionEndTime).toLocaleString();
 
-  if (!isMounted) return <></>;
   return (
     <Stack
       direction="column"
@@ -248,27 +244,29 @@ const GetSimpleAuction = ({
               <DialogTitle>Create a new Simple Auction</DialogTitle>
               <DialogContent>
                 <TextField
+                  error={isErrorInput.newBeneficiary}
                   autoFocus
                   size="small"
                   margin="dense"
                   id="newBeneficiary"
                   helperText="Beneficiary address"
                   type="text"
-                  value={newBeneficiary}
-                  onChange={(e) => setNewBeneficiary(e.target.value)}
+                  value={input.newBeneficiary}
+                  onChange={handleNewBeneficiary}
                   fullWidth
                   required
                   variant="outlined"
                 />
                 <TextField
+                  error={isErrorInput.endTime}
                   size="small"
                   margin="dense"
                   id="endTime"
                   helperText="End Time"
                   type="datetime-local"
-                  value={endTime}
+                  value={input.endTime}
                   required
-                  onChange={(e) => setEndTime(e.target.value)}
+                  onChange={handleEndTime}
                   variant="outlined"
                 />
               </DialogContent>
@@ -278,9 +276,10 @@ const GetSimpleAuction = ({
                 </Button>
                 <Button
                   size="small"
-                  disabled={disabled || isLoadingNewAuction}
+                  disabled={disabled}
                   onClick={handleCloseDialog}
-                  endIcon={<GetStatusIcon status={statusNewAuction} />}
+                  startIcon={<GetStatusIcon status={statusNewAuction} />}
+                  endIcon={<GetStatusIcon status={statusNewAuctionWait} />}
                 >
                   Create
                 </Button>
@@ -304,15 +303,16 @@ const GetSimpleAuction = ({
         )}
       </Typography>
       <TextField
+        error={isErrorInput.value}
         autoFocus
         variant="outlined"
         type="number"
         size="small"
         margin="normal"
         label="Value (ETH)"
-        value={value}
+        value={input.value}
         required
-        onChange={(e) => setValue(e.target.value)}
+        onChange={handleValue}
         disabled={disabled}
       />
       <Stack
@@ -325,52 +325,47 @@ const GetSimpleAuction = ({
         <Button
           variant="contained"
           size="small"
-          disabled={disabled || isLoadingBid}
+          disabled={disabled}
           onClick={handleBid}
-          endIcon={<GetStatusIcon status={statusBid} />}
+          startIcon={<GetStatusIcon status={statusBid} />}
+          endIcon={<GetStatusIcon status={statusBidWait} />}
         >
           Bid?
         </Button>
         <Button
           variant="contained"
           size="small"
-          disabled={disabled || isLoadingWithdraw}
+          disabled={disabled}
           onClick={handleWithdraw}
-          endIcon={<GetStatusIcon status={statusWithdraw} />}
+          startIcon={<GetStatusIcon status={statusWithdraw} />}
+          endIcon={<GetStatusIcon status={statusWithdrawWait} />}
         >
           Withdraw?
         </Button>
         <Button
           variant="contained"
           size="small"
-          disabled={disabled || isLoadingAuctionEnd}
+          disabled={disabled}
           onClick={handleAuctionEnd}
-          endIcon={<GetStatusIcon status={statusAuctionEnd} />}
+          startIcon={<GetStatusIcon status={statusAuctionEnd} />}
+          endIcon={<GetStatusIcon status={statusAuctionEndWait} />}
         >
           End Auction?
         </Button>
       </Stack>
-      <Stack
-        direction="row"
-        justifyContent="flex-start"
-        alignItems="flex-start"
-        padding={0}
-        spacing={0}
-      >
-        {isErrorBalance && (
-          <ShowError flag={isErrorBalance} error={errorBalance} />
-        )}
-        {isErrorBid && <ShowError flag={isErrorBid} error={errorBid} />}
-        {isErrorWithdraw && (
-          <ShowError flag={isErrorWithdraw} error={errorWithdraw} />
-        )}
-        {isErrorAuctionEnd && (
-          <ShowError flag={isErrorAuctionEnd} error={errorAuctionEnd} />
-        )}
-        {isErrorNewAuction && (
-          <ShowError flag={isErrorNewAuction} error={errorNewAuction} />
-        )}
-      </Stack>
+      {isErrorBalance && (
+        <ShowError flag={isErrorBalance} error={errorBalance} />
+      )}
+      {isErrorBid && <ShowError flag={isErrorBid} error={errorBid} />}
+      {isErrorWithdraw && (
+        <ShowError flag={isErrorWithdraw} error={errorWithdraw} />
+      )}
+      {isErrorAuctionEnd && (
+        <ShowError flag={isErrorAuctionEnd} error={errorAuctionEnd} />
+      )}
+      {isErrorNewAuction && (
+        <ShowError flag={isErrorNewAuction} error={errorNewAuction} />
+      )}
     </Stack>
   );
 };

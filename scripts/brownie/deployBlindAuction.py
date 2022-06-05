@@ -1,5 +1,5 @@
 from brownie import convert, web3, config, network, accounts, BlindAuction
-from scripts.helpful_scripts import get_account, update_front_end, LOCAL_BLOCKCHAIN_ENVIRONMENTS
+from scripts.brownie.helpful_scripts import get_account, update_front_end, LOCAL_BLOCKCHAIN_ENVIRONMENTS
 
 import time
 from eth_account.messages import encode_defunct

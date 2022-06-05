@@ -1,6 +1,6 @@
 import Error from "./Error";
-import SimpleAuction from "./SimpleAuction";
-import BlindAuction from "./BlindAuction";
+import SimpleAuctionContainer from "./SimpleAuctionContainer";
+import BlindAuctionContainer from "./BlindAuctionContainer";
 import SharedLayout from "./SharedLayout";
 
-export { Error, SimpleAuction, BlindAuction, SharedLayout };
+export { Error, SimpleAuctionContainer, BlindAuctionContainer, SharedLayout };

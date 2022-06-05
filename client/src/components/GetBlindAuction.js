@@ -11,15 +11,14 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 
 import { BigNumber, utils } from "ethers";
-import {
-  addressNotZero,
-  formatBalance,
-  shortenAddress,
-  getNumConfirmations,
-} from "../utils/utils";
+import { addressNotZero, formatBalance, shortenAddress } from "../utils/utils";
 
-import { useBalance, useContractWrite, useWaitForTransaction } from "wagmi";
-import { useIsMounted, useDetailsBlindAuction } from "../hooks";
+import { useBalance } from "wagmi";
+import {
+  useIsMounted,
+  useDetailsBlindAuction,
+  useGetFuncWrite,
+} from "../hooks";
 import { GetStatusIcon, ShowError } from "../components";
 
 const GetBlindAuction = ({
@@ -32,17 +31,30 @@ const GetBlindAuction = ({
   const isEnabled = Boolean(
     isMounted && activeChain && account && addressNotZero(contractAddress)
   );
-  const numConfirmations = getNumConfirmations(activeChain);
   const [disabled, setDisabled] = useState(false);
-  const [value, setValue] = useState("0");
-  const [newBeneficiary, setNewBeneficiary] = useState("");
-  const [newBiddingEnd, setNewBiddingEnd] = useState("");
-  const [newRevealEnd, setNewRevealEnd] = useState("");
+  const [input, setInput] = useState({
+    newBeneficiary: "",
+    newBiddingEnd: "",
+    newRevealEnd: "",
+    value: "0",
+  });
+  const [isErrorInput, setIsErrorInput] = useState({
+    newBeneficiary: false,
+    newBiddingEnd: false,
+    newRevealEnd: false,
+    value: false,
+  });
+
   const [openDialog, setOpenDialog] = useState(false);
   const [params, setParams] = useState({
     value: "0",
     fake: false,
     secret: "",
+  });
+  const [isErrorParams, setIsErrorParams] = useState({
+    value: false,
+    fake: false,
+    secret: false,
   });
 
   const {
@@ -66,209 +78,80 @@ const GetBlindAuction = ({
     ended,
   } = useDetailsBlindAuction(activeChain, contractAddress, contractABI);
 
+  // bid function
   const {
-    data: dataBid,
     error: errorBid,
     isError: isErrorBid,
-    isLoading: isLoadingBid,
     write: writeBid,
     status: statusBid,
-  } = useContractWrite(
-    {
-      addressOrName: contractAddress,
-      contractInterface: contractABI,
-    },
+    statusWait: statusBidWait,
+  } = useGetFuncWrite(
     "bid",
-    {
-      enabled: isEnabled,
-    }
+    activeChain,
+    contractAddress,
+    contractABI,
+    isEnabled
   );
-  const { status: statusBidWait } = useWaitForTransaction({
-    hash: dataBid?.hash,
-    wait: dataBid?.wait,
-    confirmations: numConfirmations,
-    enabled: isEnabled,
-  });
 
+  // withdraw function
   const {
-    data: dataWithdraw,
     error: errorWithdraw,
     isError: isErrorWithdraw,
-    isLoading: isLoadingWithdraw,
     write: writeWithdraw,
     status: statusWithdraw,
-  } = useContractWrite(
-    {
-      addressOrName: contractAddress,
-      contractInterface: contractABI,
-    },
+    statusWait: statusWithdrawWait,
+  } = useGetFuncWrite(
     "withdraw",
-    {
-      enabled: isEnabled,
-    }
+    activeChain,
+    contractAddress,
+    contractABI,
+    isEnabled
   );
-  const { status: statusWithdrawWait } = useWaitForTransaction({
-    hash: dataWithdraw?.hash,
-    wait: dataWithdraw?.wait,
-    confirmations: numConfirmations,
-    enabled: isEnabled,
-  });
 
+  // reveal function
   const {
-    data: dataReveal,
     error: errorReveal,
     isError: isErrorReveal,
-    isLoading: isLoadingReveal,
     write: writeReveal,
     status: statusReveal,
-  } = useContractWrite(
-    {
-      addressOrName: contractAddress,
-      contractInterface: contractABI,
-    },
+    statusWait: statusRevealWait,
+  } = useGetFuncWrite(
     "reveal",
-    {
-      enabled: isEnabled,
-    }
+    activeChain,
+    contractAddress,
+    contractABI,
+    isEnabled
   );
-  const { status: statusRevealWait } = useWaitForTransaction({
-    hash: dataReveal?.hash,
-    wait: dataReveal?.wait,
-    confirmations: numConfirmations,
-    enabled: isEnabled,
-  });
 
+  // auctionEnd function
   const {
-    data: dataAuctionEnd,
     error: errorAuctionEnd,
     isError: isErrorAuctionEnd,
-    isLoading: isLoadingAuctionEnd,
     write: writeAuctionEnd,
     status: statusAuctionEnd,
-  } = useContractWrite(
-    {
-      addressOrName: contractAddress,
-      contractInterface: contractABI,
-    },
+    statusWait: statusAuctionEndWait,
+  } = useGetFuncWrite(
     "auctionEnd",
-    {
-      enabled: isEnabled,
-    }
+    activeChain,
+    contractAddress,
+    contractABI,
+    isEnabled
   );
-  const { status: statusAuctionEndWait } = useWaitForTransaction({
-    hash: dataAuctionEnd?.hash,
-    wait: dataAuctionEnd?.wait,
-    confirmations: numConfirmations,
-    enabled: isEnabled,
-  });
 
+  // newAuction function
   const {
-    data: dataNewAuction,
     error: errorNewAuction,
     isError: isErrorNewAuction,
-    isLoading: isLoadingNewAuction,
     write: writeNewAuction,
     status: statusNewAuction,
-  } = useContractWrite(
-    {
-      addressOrName: contractAddress,
-      contractInterface: contractABI,
-    },
+    statusWait: statusNewAuctionWait,
+  } = useGetFuncWrite(
     "newAuction",
-    {
-      enabled: isEnabled,
-    }
+    activeChain,
+    contractAddress,
+    contractABI,
+    isEnabled
   );
-  const { status: statusNewAuctionWait } = useWaitForTransaction({
-    hash: dataNewAuction?.hash,
-    wait: dataNewAuction?.wait,
-    confirmations: numConfirmations,
-    enabled: isEnabled,
-  });
-
-  const handleBid = () => {
-    let defaultValue = 0;
-    if (
-      value &&
-      parseFloat(value) > 0 &&
-      params.value &&
-      parseFloat(params.value) > 0
-    ) {
-      setDisabled(true);
-      defaultValue = utils.parseEther(value);
-      const formattedValue = utils.parseEther(params.value);
-      const formattedFake =
-        params.fake === true ? BigNumber.from("1") : BigNumber.from("0");
-      const formattedSecret = utils.formatBytes32String(params.secret);
-      const dataHex = utils.solidityKeccak256(
-        ["uint256", "bool", "bytes32"],
-        [formattedValue, formattedFake, formattedSecret]
-      );
-      writeBid({
-        args: [dataHex],
-        overrides: { value: defaultValue, gasLimit: 6721975 },
-      });
-      setValue("0");
-      setParams({ value: "0", fake: false, secret: "" });
-    }
-  };
-
-  const handleReveal = () => {
-    if (params.value && parseFloat(params.value) > 0) {
-      setDisabled(true);
-      const formattedValue = utils.parseEther(params.value);
-      const formattedFake =
-        params.fake === true ? BigNumber.from("1") : BigNumber.from("0");
-      const formattedSecret = utils.formatBytes32String(params.secret);
-      writeReveal({
-        args: [[formattedValue], [formattedFake], [formattedSecret]],
-        overrides: { gasLimit: 6721975 },
-      });
-      setValue("0");
-      setParams({ value: "0", fake: false, secret: "" });
-    }
-  };
-
-  const handleWithdraw = () => {
-    setDisabled(true);
-    writeWithdraw({
-      overrides: { gasLimit: 6721975 },
-    });
-  };
-
-  const handleAuctionEnd = () => {
-    setDisabled(true);
-    writeAuctionEnd({
-      overrides: { gasLimit: 6721975 },
-    });
-  };
-
-  const handleCloseDialog = (event, reason) => {
-    if (
-      (reason && (reason === "backdropClick" || reason === "escapeKeyDown")) ||
-      event.target.value === "cancel"
-    ) {
-      setOpenDialog(false);
-      setNewBeneficiary("");
-      setNewBiddingEnd("");
-      setNewRevealEnd("");
-    } else {
-      if (newBeneficiary && utils.isAddress(newBeneficiary)) {
-        const currentDate = new Date();
-        const localDateB = new Date(newBiddingEnd);
-        const localDateR = new Date(newRevealEnd);
-        if (localDateB < localDateR && currentDate < localDateB) {
-          const BNBiddingEnd = BigNumber.from(localDateB.getTime() / 1000);
-          const BNRevealEnd = BigNumber.from(localDateR.getTime() / 1000);
-          setDisabled(true);
-          writeNewAuction({
-            args: [BNBiddingEnd, BNRevealEnd, newBeneficiary],
-          });
-          setOpenDialog(false);
-        }
-      }
-    }
-  };
 
   useEffect(() => {
     if (
@@ -285,6 +168,13 @@ const GetBlindAuction = ({
       statusNewAuctionWait !== "loading"
     ) {
       if (disabled) setDisabled(false);
+      setInput({
+        newBeneficiary: "",
+        newBiddingEnd: "",
+        newRevealEnd: "",
+        value: "0",
+      });
+      setParams({ value: "0", fake: false, secret: "" });
     }
     // eslint-disable-next-line
   }, [
@@ -309,6 +199,164 @@ const GetBlindAuction = ({
     { value: false, label: "false" },
     { value: true, label: "true" },
   ];
+  const handleValue = (e) => {
+    setInput({ ...input, value: e.target.value });
+    if (isErrorInput.value) setIsErrorInput({ ...isErrorInput, value: false });
+  };
+
+  const handleNewBeneficiary = (e) => {
+    setInput({ ...input, newBeneficiary: e.target.value });
+    if (isErrorInput.newBeneficiary)
+      setIsErrorInput({ ...isErrorInput, newBeneficiary: false });
+  };
+  const handleNewBiddingEnd = (e) => {
+    setInput({ ...input, newBiddingEnd: e.target.value });
+    if (isErrorInput.newBiddingEnd)
+      setIsErrorInput({ ...isErrorInput, newBiddingEnd: false });
+  };
+  const handleNewRevealEnd = (e) => {
+    setInput({ ...input, newRevealEnd: e.target.value });
+    if (isErrorInput.newRevealEnd)
+      setIsErrorInput({ ...isErrorInput, newRevealEnd: false });
+  };
+
+  const handleBid = () => {
+    if (input.value && input.value !== "" && parseFloat(input.value) > 0) {
+      if (params.value && params.value !== "" && parseFloat(params.value) > 0) {
+        if (params.fake === true || params.fake === false) {
+          if (params.secret && params.secret !== "") {
+            const localValue = utils.parseEther(input.value);
+            const formattedParamsValue = utils.parseEther(params.value);
+            const formattedParamsFake =
+              params.fake === true ? BigNumber.from("1") : BigNumber.from("0");
+            const formattedParamsSecret = utils.formatBytes32String(
+              params.secret
+            );
+            const dataHex = utils.solidityKeccak256(
+              ["uint256", "bool", "bytes32"],
+              [formattedParamsValue, formattedParamsFake, formattedParamsSecret]
+            );
+            setDisabled(true);
+            writeBid({
+              args: [dataHex],
+              overrides: { value: localValue, gasLimit: 6721975 },
+            });
+          } else {
+            setIsErrorParams({ ...isErrorParams, secret: true });
+          }
+        } else {
+          setIsErrorParams({ ...isErrorParams, fake: true });
+        }
+      } else {
+        setIsErrorParams({ ...isErrorParams, value: true });
+      }
+    } else {
+      setIsErrorInput({ ...isErrorInput, value: true });
+    }
+  };
+
+  const handleReveal = () => {
+    if (params.value && params.value !== "" && parseFloat(params.value) > 0) {
+      if (params.fake === true || params.fake === false) {
+        if (params.secret && params.secret !== "") {
+          const formattedParamsValue = utils.parseEther(params.value);
+          const formattedParamsFake =
+            params.fake === true ? BigNumber.from("1") : BigNumber.from("0");
+          const formattedParamsSecret = utils.formatBytes32String(
+            params.secret
+          );
+          setDisabled(true);
+          writeReveal({
+            args: [
+              [formattedParamsValue],
+              [formattedParamsFake],
+              [formattedParamsSecret],
+            ],
+            overrides: { gasLimit: 6721975 },
+          });
+        } else {
+          setIsErrorParams({ ...isErrorParams, secret: true });
+        }
+      } else {
+        setIsErrorParams({ ...isErrorParams, fake: true });
+      }
+    } else {
+      setIsErrorParams({ ...isErrorParams, value: true });
+    }
+  };
+
+  const handleWithdraw = () => {
+    setDisabled(true);
+    writeWithdraw({
+      overrides: { gasLimit: 6721975 },
+    });
+  };
+
+  const handleAuctionEnd = () => {
+    setDisabled(true);
+    writeAuctionEnd({
+      overrides: { gasLimit: 6721975 },
+    });
+  };
+
+  const handleCloseDialog = (event, reason) => {
+    if (
+      (reason && (reason === "backdropClick" || reason === "escapeKeyDown")) ||
+      event.target.value === "cancel"
+    ) {
+      setOpenDialog(false);
+      setInput({
+        newBeneficiary: "",
+        newBiddingEnd: "",
+        newRevealEnd: "",
+        value: "0",
+      });
+    } else {
+      if (
+        input.newBeneficiary &&
+        input.newBeneficiary !== "" &&
+        utils.isAddress(input.newBeneficiary)
+      ) {
+        if (input.newBiddingEnd && input.newBiddingEnd !== "") {
+          if (input.newRevealEnd && input.newRevealEnd !== "") {
+            try {
+              const localDateB = new Date(input.newBiddingEnd);
+              try {
+                const localDateR = new Date(input.newRevealEnd);
+                const currentDate = new Date();
+                if (localDateB < localDateR && currentDate < localDateB) {
+                  const BNBiddingEnd = BigNumber.from(
+                    localDateB.getTime() / 1000
+                  );
+                  const BNRevealEnd = BigNumber.from(
+                    localDateR.getTime() / 1000
+                  );
+                  setDisabled(true);
+                  writeNewAuction({
+                    args: [BNBiddingEnd, BNRevealEnd, input.newBeneficiary],
+                  });
+                  setOpenDialog(false);
+                } else {
+                  setIsErrorInput({ ...isErrorInput, newBiddingEnd: true });
+                  setIsErrorInput({ ...isErrorInput, newRevealEnd: true });
+                }
+              } catch (error) {
+                setIsErrorInput({ ...isErrorInput, newRevealEnd: true });
+              }
+            } catch (error) {
+              setIsErrorInput({ ...isErrorInput, newBiddingEnd: true });
+            }
+          } else {
+            setIsErrorInput({ ...isErrorInput, newRevealEnd: true });
+          }
+        } else {
+          setIsErrorInput({ ...isErrorInput, newBiddingEnd: true });
+        }
+      } else {
+        setIsErrorInput({ ...isErrorInput, newBeneficiary: true });
+      }
+    }
+  };
 
   if (!isMounted) return <></>;
   return (
@@ -329,8 +377,10 @@ const GetBlindAuction = ({
             <Button
               variant="contained"
               size="small"
-              disabled={disabled || isLoadingBid}
+              disabled={disabled}
               onClick={() => setOpenDialog(true)}
+              startIcon={<GetStatusIcon status={statusNewAuction} />}
+              endIcon={<GetStatusIcon status={statusNewAuctionWait} />}
             >
               New Auction
             </Button>
@@ -338,38 +388,41 @@ const GetBlindAuction = ({
               <DialogTitle>Create a new Blind Auction</DialogTitle>
               <DialogContent>
                 <TextField
+                  error={isErrorInput.newBeneficiary}
                   autoFocus
                   size="small"
                   margin="dense"
                   id="newBeneficiary"
                   helperText="Beneficiary address"
                   type="text"
-                  value={newBeneficiary}
-                  onChange={(e) => setNewBeneficiary(e.target.value)}
+                  value={input.newBeneficiary}
+                  onChange={handleNewBeneficiary}
                   fullWidth
                   required
                   variant="outlined"
                 />
                 <TextField
+                  error={isErrorInput.newBiddingEnd}
                   size="small"
                   margin="dense"
                   id="biddingEnd"
                   helperText="Bidding End Time"
                   type="datetime-local"
-                  value={newBiddingEnd}
+                  value={input.newBiddingEnd}
                   required
-                  onChange={(e) => setNewBiddingEnd(e.target.value)}
+                  onChange={handleNewBiddingEnd}
                   variant="outlined"
                 />
                 <TextField
+                  error={isErrorInput.newRevealEnd}
                   size="small"
                   margin="dense"
                   id="revealEnd"
                   helperText="Reveal End Time"
                   type="datetime-local"
-                  value={newRevealEnd}
+                  value={input.newRevealEnd}
                   required
-                  onChange={(e) => setNewRevealEnd(e.target.value)}
+                  onChange={handleNewRevealEnd}
                   variant="outlined"
                 />
               </DialogContent>
@@ -379,9 +432,8 @@ const GetBlindAuction = ({
                 </Button>
                 <Button
                   size="small"
-                  disabled={disabled || isLoadingNewAuction}
+                  disabled={disabled}
                   onClick={handleCloseDialog}
-                  endIcon={<GetStatusIcon status={statusNewAuction} />}
                 >
                   Create
                 </Button>
@@ -400,13 +452,7 @@ const GetBlindAuction = ({
       <Typography color={biddingEnd > currentDate ? "primary.text" : "red"}>
         Bidding End : {biddingEndFormatted}
       </Typography>
-      <Typography
-        color={
-          revealEnd > currentDate && currentDate > biddingEnd
-            ? "primary.text"
-            : "red"
-        }
-      >
+      <Typography color={revealEnd > currentDate ? "primary.text" : "red"}>
         Reveal End : {revealEndFormatted}
       </Typography>
       <Typography color={ended.toString() === "true" ? "red" : "primary.text"}>
@@ -421,6 +467,7 @@ const GetBlindAuction = ({
         spacing={1}
       >
         <TextField
+          error={isErrorParams.value}
           autoFocus
           variant="outlined"
           size="small"
@@ -431,6 +478,7 @@ const GetBlindAuction = ({
           disabled={disabled}
         />
         <TextField
+          error={isErrorParams.fake}
           variant="outlined"
           size="small"
           select
@@ -446,6 +494,7 @@ const GetBlindAuction = ({
           ))}
         </TextField>
         <TextField
+          error={isErrorParams.secret}
           variant="outlined"
           size="small"
           type="text"
@@ -457,13 +506,14 @@ const GetBlindAuction = ({
       </Stack>
 
       <TextField
+        error={isErrorInput.value}
         variant="outlined"
         type="number"
         size="small"
-        label="Value (ETH)"
-        value={value}
+        label="Value to deposit in contract (ETH)"
+        value={input.value}
         required
-        onChange={(e) => setValue(e.target.value)}
+        onChange={handleValue}
         disabled={disabled}
       />
       <Stack
@@ -477,9 +527,10 @@ const GetBlindAuction = ({
           <Button
             variant="contained"
             size="small"
-            disabled={disabled || isLoadingBid}
+            disabled={disabled}
             onClick={handleBid}
-            endIcon={<GetStatusIcon status={statusBid} />}
+            startIcon={<GetStatusIcon status={statusBid} />}
+            endIcon={<GetStatusIcon status={statusBidWait} />}
           >
             Bid?
           </Button>
@@ -488,31 +539,36 @@ const GetBlindAuction = ({
           <Button
             variant="contained"
             size="small"
-            disabled={disabled || isLoadingReveal}
+            disabled={disabled}
             onClick={handleReveal}
-            endIcon={<GetStatusIcon status={statusReveal} />}
+            startIcon={<GetStatusIcon status={statusReveal} />}
+            endIcon={<GetStatusIcon status={statusRevealWait} />}
           >
             Reveal?
           </Button>
         )}
-        <Button
-          variant="contained"
-          size="small"
-          disabled={disabled || isLoadingWithdraw}
-          onClick={handleWithdraw}
-          endIcon={<GetStatusIcon status={statusWithdraw} />}
-        >
-          Withdraw?
-        </Button>
+        {parseInt(balance?.toString()) > 0 && (
+          <Button
+            variant="contained"
+            size="small"
+            disabled={disabled}
+            onClick={handleWithdraw}
+            startIcon={<GetStatusIcon status={statusWithdraw} />}
+            endIcon={<GetStatusIcon status={statusWithdrawWait} />}
+          >
+            Withdraw?
+          </Button>
+        )}
         {revealEnd < currentDate &&
           currentDate < biddingEnd &&
           ended.toString() === "false" && (
             <Button
               variant="contained"
               size="small"
-              disabled={disabled || isLoadingAuctionEnd}
+              disabled={disabled}
               onClick={handleAuctionEnd}
-              endIcon={<GetStatusIcon status={statusAuctionEnd} />}
+              startIcon={<GetStatusIcon status={statusAuctionEnd} />}
+              endIcon={<GetStatusIcon status={statusAuctionEndWait} />}
             >
               End Auction?
             </Button>
